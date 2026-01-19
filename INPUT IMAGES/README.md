@@ -2,13 +2,13 @@
 
 These are actual input images processed by the script. The code was executed and outputs were documented in the project report.
 
-### Input Image 1: images/english_questions.png
+### Input Image 1: img1.png
 - **Type**: Printed educational reference material
 - **Content**: Common English conversation practice questions with multiple sample responses
 - **Format**: Numbered questions with example answers separated by forward slashes
 - **Quality**: High-resolution printed text with color highlights
 
-### Input Image 2: images/handwritten_mcq.png
+### Input Image 2: img2.png
 - **Type**: Handwritten text on ruled notebook paper
 - **Content**: MCQ question about Mrs. Shaw's advice with four options and answer key
 - **Format**: Question followed by options (a), (b), (c), (d) with written answer
