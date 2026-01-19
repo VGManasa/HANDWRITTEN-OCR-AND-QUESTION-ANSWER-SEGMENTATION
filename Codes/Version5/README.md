@@ -1,140 +1,238 @@
 # VERSION 5
 
-A Python script that performs OCR on handwritten question-and-answer documents and automatically extracts Q&A pairs into a clean text format.
+A Python pipeline that processes handwritten document images and extracts structured question-answer pairs using OCR technology.
 
 ## Features
 
-- **Optical Character Recognition (OCR)**: Extracts text from handwritten images using Tesseract OCR
-- **Advanced Image Preprocessing**: 
-  - Grayscale conversion for consistent processing
-  - 2x image upscaling (INTER_CUBIC interpolation) for enhanced OCR accuracy
-  - Median blur filtering (3x3 kernel) to reduce noise
-  - Adaptive Gaussian thresholding for optimal binarization
-- **Intelligent Text Cleaning**:
-  - Automatic line merging and space normalization
-  - Sentence boundary detection and formatting
-  - Whitespace consolidation using regex patterns
-- **Smart Q&A Detection**:
-  - Numbered question pattern recognition (1., Q1, etc.)
-  - Keyword-based question identification (what, why, how, define, explain, describe)
-  - Automatic answer extraction between questions
-  - Question mark normalization
-- **Batch Processing**: Processes multiple images (PNG, JPG, JPEG) from a folder automatically
-- **Sorted Processing**: Alphabetically sorted file processing for consistent output order
-- **Automatic Directory Management**: Creates output folder if it doesn't exist
-- **Structured Text Output**: 
-  - Sequential Q&A pair numbering
-  - Clean, formatted text file generation
-  - UTF-8 encoding support for special characters
-- **Progress Monitoring**: Console output showing which files are being processed
-- **Tesseract Configuration**: Optimized OCR settings with custom config string (OEM 3, PSM 6, interword space preservation)
+- Batch processing of multiple images from a folder
+- OpenCV-based image preprocessing for enhanced OCR accuracy
+- Tesseract OCR integration with optimized configuration
+- Intelligent question-answer segmentation using pattern matching
+- Automatic question mark normalization
+- Sequential Q&A numbering
+- Saves clean, structured Q&A pairs
+- No use of LLMs or semantic models
 
-## Prerequisites
-
-### Software Requirements
+## Tech Stack
 
 - Python 3.x
-- Tesseract OCR installed on your system
+- OpenCV (cv2)
+- Tesseract OCR
+- pytesseract
+- NumPy
+- Regular Expressions
 
-### Python Dependencies
+## Installation
 
+1. Install Python dependencies:
 ```bash
 pip install opencv-python pytesseract numpy
 ```
 
-### Tesseract Installation
+2. Install Tesseract OCR:
+   - **Windows**: Download from [GitHub releases](https://github.com/UB-Mannheim/tesseract/wiki)
+   - **Linux**: `sudo apt-get install tesseract-ocr`
+   - **macOS**: `brew install tesseract`
 
-Download and install Tesseract OCR from:
-- Windows: https://github.com/UB-Mannheim/tesseract/wiki
-- macOS: `brew install tesseract`
-- Linux: `sudo apt-get install tesseract-ocr`
+3. Update Tesseract path in script:
+```python
+pytesseract.pytesseract.tesseract_cmd = r"C:\Users\VGMan\AppData\Local\Programs\Tesseract-OCR\tesseract.exe"
+```
 
 ## Configuration
 
-Update the following paths in the script to match your system:
+Update these paths before running:
 
 ```python
-pytesseract.pytesseract.tesseract_cmd = r"C:\Path\To\tesseract.exe"
-IMAGE_FOLDER = r"C:\Path\To\Your\Images"
-OUTPUT_FOLDER = r"C:\Path\To\Your\Outputs"
+IMAGE_FOLDER = r"C:\Users\VGMan\Downloads\Handwritten_OCR_QA\images"
+OUTPUT_FOLDER = r"C:\Users\VGMan\Downloads\Handwritten_OCR_QA\outputs"
 ```
 
 ## Usage
 
-1. Place your handwritten Q&A images (PNG, JPG, JPEG) in the `IMAGE_FOLDER` directory
+1. Place all handwritten images in the `IMAGE_FOLDER`
 2. Run the script:
-   ```bash
-   python ocr_qa_extractor.py
-   ```
-3. Find the extracted Q&A pairs in `OUTPUT_FOLDER/final_qa_clean.txt`
+```bash
+python ocr_qa_extractor.py
+```
+
+3. Check output in `OUTPUT_FOLDER`:
+   - `final_qa_clean.txt` - Structured Q&A pairs
 
 ## How It Works
 
-### Image Processing Pipeline
+### 1. Image Preprocessing
+- **Upscaling**: 2x resize using cubic interpolation for better character recognition
+- **Grayscale conversion**: Eliminates color noise
+- **Median blur (kernel=3)**: Removes salt-and-pepper noise
+- **Adaptive thresholding**: Gaussian-based binarization with block size 31 and constant 10
 
-1. **Image Loading**: Reads images from the specified folder
-2. **Preprocessing**:
-   - Converts to grayscale
-   - Upscales 2x for better OCR accuracy
-   - Applies median blur to reduce noise
-   - Uses adaptive thresholding for binarization
-3. **OCR Extraction**: Uses Tesseract with optimized configuration
-4. **Text Cleaning**: Removes extra whitespace and formats sentences
+### 2. OCR Text Extraction
+- **OEM Mode 3**: Default Tesseract engine (legacy + LSTM)
+- **PSM Mode 6**: Assumes uniform block of text
+- **Preserve interword spaces**: Maintains spacing for better structure
+- Processes images in alphabetical order
+- Concatenates text from all images sequentially
 
-### Q&A Detection
+### 3. Text Cleaning and Formatting
+- **Line merging**: Converts newlines to spaces for continuous text
+- **Space normalization**: Collapses multiple spaces into single space using regex `\s+`
+- **Sentence formatting**: Places sentences on new lines by detecting punctuation (`.?!`)
+- Strips extra whitespace from final output
 
-The script identifies questions using multiple patterns:
-- Numbered questions (e.g., "1.", "Q1")
-- Question keywords (what, why, how, define, explain, describe)
-- Question marks
+### 4. Question-Answer Segmentation
 
-Answers are captured as all text following a question until the next question is detected.
+**Question Detection Rules**:
+- Lines starting with numbers (`1.`, `2.`, etc.) or `Q` followed by digit (`Q1`, `Q2`)
+- Lines starting with question words: `what`, `why`, `how`, `define`, `explain`, `describe`
+- Case-insensitive matching
 
-## Output Format
+**Answer Grouping**:
+- All lines after a question become the answer
+- Multi-line content is joined with spaces
+- Continues until next question is detected
 
+### 5. Question Normalization
+- Strips trailing question marks
+- Adds question mark automatically to ensure consistency
+- Format: `question text?`
+
+### 6. Output Formatting
+- Sequential numbering (Q1, Q2, Q3...)
+- Format: `Q{n}: question?` and `A{n}: answer text`
+- Double newline separation between pairs
+- UTF-8 encoding for international characters
+
+## Input/Output Examples
+
+### Input: images/exam_page1.png
 ```
-Q1: What is photosynthesis?
+1. What is photosynthesis
+Photosynthesis is the process by which plants convert
+light energy into chemical energy.
+
+2. Why is water important for plants
+Water is essential for photosynthesis and helps
+transport nutrients throughout the plant.
+```
+
+### Output: final_qa_clean.txt
+```
+Q1: 1. What is photosynthesis?
 A1: Photosynthesis is the process by which plants convert light energy into chemical energy.
 
 Q2: Why is water important for plants?
 A2: Water is essential for photosynthesis and helps transport nutrients throughout the plant.
 ```
 
-## Customization
+## File Structure
 
-### OCR Configuration
-
-Modify the Tesseract config string for different use cases:
-```python
-config = "--oem 3 --psm 6 -c preserve_interword_spaces=1"
+```
+project/
+├── ocr_qa_extractor.py         # Main script
+├── images/
+│   ├── page1.png               # Input image 1
+│   ├── page2.jpg               # Input image 2
+│   └── page3.jpeg              # Input image 3
+└── outputs/
+    └── final_qa_clean.txt      # Structured Q&A pairs
 ```
 
-- `--oem 3`: Use LSTM OCR engine
-- `--psm 6`: Assume uniform text block
-- Adjust PSM modes (1-13) based on document layout
+## Preprocessing Parameters
 
-### Image Preprocessing
+| Parameter | Value | Purpose |
+|-----------|-------|---------|
+| Upscale Factor | 2x | Doubles image resolution |
+| Interpolation | INTER_CUBIC | Smooth upscaling algorithm |
+| Median Blur Kernel | 3 | Noise reduction strength |
+| Threshold Method | ADAPTIVE_GAUSSIAN | Local adaptive binarization |
+| Block Size | 31 | Neighborhood size for threshold |
+| Constant | 10 | Subtracted from weighted mean |
 
-Adjust preprocessing parameters for different image qualities:
-```python
-gray = cv2.resize(gray, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)  # Scaling factor
-gray = cv2.medianBlur(gray, 3)  # Blur kernel size
-cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 31, 10)  # Threshold parameters
-```
+## OCR Configuration
+
+| Parameter | Value | Purpose |
+|-----------|-------|---------|
+| OEM | 3 | Default Tesseract engine mode |
+| PSM | 6 | Uniform block of text |
+| preserve_interword_spaces | 1 | Maintains word spacing |
+
+## Supported Image Formats
+
+- PNG (.png)
+- JPEG (.jpg, .jpeg)
+
+## Question Detection Patterns
+
+The script recognizes these question patterns:
+
+| Pattern | Detected |
+|---------|----------|
+| `1. What is...` | Yes (numbered) |
+| `Q1 Why did...` | Yes (Q-prefixed) |
+| `What causes...` | Yes (question word) |
+| `How does...` | Yes (question word) |
+| `Define the term...` | Yes (question word) |
+| `explain this concept` | Yes (case-insensitive) |
+| `Random statement.` | No |
 
 ## Limitations
 
-- OCR accuracy depends heavily on handwriting legibility
-- Rule-based Q&A detection may miss non-standard question formats
-- Best results with clear, well-spaced handwritten text
-- Does not handle multi-column layouts
+- Performance depends on handwriting legibility
+- Rule-based detection may miss non-standard question formats
+- Works best with single-column layouts
+- Cannot handle diagrams or images within questions
+- No support for multi-part questions (1a, 1b, 1c)
+- Requires clear question indicators (numbers, keywords, or question marks)
+- May incorrectly split complex multi-sentence questions
+
+## Future Improvements
+
+- Confidence-based OCR filtering
+- Support for multi-column layouts
+- Better handling of multi-part questions
+- Configurable question detection patterns
+- JSON/CSV export formats
+- GUI interface for easier use
+- OCR quality metrics and reporting
+- Support for answer key extraction
 
 ## Troubleshooting
 
-**Tesseract not found error**: Verify the `tesseract_cmd` path is correct for your system
+**Issue**: Tesseract not found
+- **Solution**: Verify installation path and update `tesseract_cmd` variable
 
-**Poor OCR accuracy**: Try adjusting preprocessing parameters or improving image quality (higher resolution, better lighting)
+**Issue**: Poor OCR accuracy
+- **Solution**: Use higher resolution scans (300+ DPI), adjust threshold parameters, ensure good lighting
 
-**Questions not detected**: Check if questions follow standard formats or add custom patterns to the regex
+**Issue**: Questions not detected
+- **Solution**: Ensure questions start with numbers, Q-prefix, or question words (what, why, how, etc.)
 
+**Issue**: Images processed in wrong order
+- **Solution**: Rename files with numeric prefixes (001_page.png, 002_page.png)
 
+**Issue**: Answers incorrectly split across multiple Q&A pairs
+- **Solution**: Review question detection patterns, ensure answer text doesn't start with question keywords
+
+**Issue**: Special characters corrupted in output
+- **Solution**: Verify UTF-8 encoding support in your text editor
+
+## Use Cases
+
+Perfect for:
+- Digitizing handwritten exam papers
+- Processing student assignments and quizzes
+- Converting interview notes to digital format
+- Creating question banks from scanned materials
+- Automating document archival
+
+## Performance Tips
+
+- Use high-resolution scans (300+ DPI minimum)
+- Ensure good lighting with minimal shadows
+- Use black ink on white paper for best contrast
+- Keep handwriting neat and well-spaced
+- Number questions consistently (1., 2., 3.)
+- Start questions with clear keywords
+- Avoid smudges and erasure marks
+- Process images in batches for efficiency
