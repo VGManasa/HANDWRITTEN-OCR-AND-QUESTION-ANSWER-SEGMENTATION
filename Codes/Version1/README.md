@@ -163,11 +163,11 @@ The script recognizes these question starter words:
 ## Processing Guarantees
 
 The script guarantees:
-- ✅ Every question ends with `?`
-- ✅ Proper sequential numbering (Q1, A1, Q2, A2...)
-- ✅ Answers appear under correct questions
-- ✅ No duplicate numbering
-- ✅ No empty questions or answers
+- Every question ends with `?`
+- Proper sequential numbering (Q1, A1, Q2, A2...)
+- Answers appear under correct questions
+- No duplicate numbering
+- No empty questions or answers
 
 ## Edge Cases Handled
 
